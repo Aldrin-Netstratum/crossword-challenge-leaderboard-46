@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { useAppStore } from "@/lib/data";
 import { Clock, Brain, LogIn, Trophy } from "lucide-react";
@@ -39,7 +38,7 @@ const Index = () => {
               Sidharth Sham Lal's PowerBI Challenge
             </h1>
             <p className="text-xl text-muted-foreground max-w-xs mx-auto">
-              Part of the "Wikipeedika" talk session
+              Wikipeedika talk session
             </p>
             <p className="text-md text-muted-foreground mt-2 max-w-xs mx-auto">
               Test your knowledge and compete for the fastest time
@@ -54,14 +53,20 @@ const Index = () => {
           >
             {currentUser ? (
               <Link to="/quiz" className="block">
-                <Button size="lg" className="w-full bg-powerbi hover:bg-powerbi/90">
+                <Button
+                  size="lg"
+                  className="w-full bg-powerbi hover:bg-powerbi/90"
+                >
                   <Brain className="mr-2 h-5 w-5" />
                   Start Quiz
                 </Button>
               </Link>
             ) : (
               <Link to="/login" className="block">
-                <Button size="lg" className="w-full bg-powerbi hover:bg-powerbi/90">
+                <Button
+                  size="lg"
+                  className="w-full bg-powerbi hover:bg-powerbi/90"
+                >
                   <LogIn className="mr-2 h-5 w-5" />
                   Login to Play
                 </Button>
@@ -102,18 +107,27 @@ const Index = () => {
       </main>
 
       <footer className="py-6 text-center text-sm text-muted-foreground">
-        <p>Sidharth Sham Lal's PowerBI Challenge &copy; {new Date().getFullYear()}</p>
+        <p>
+          Sidharth Sham Lal's PowerBI Challenge &copy;{" "}
+          {new Date().getFullYear()}
+        </p>
         <p className="text-xs mt-1">A Wikipeedika Production</p>
       </footer>
     </div>
   );
 };
 
-const FeatureCard = ({ icon, title, description }: { icon: React.ReactNode, title: string, description: string }) => (
+const FeatureCard = ({
+  icon,
+  title,
+  description,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+}) => (
   <div className="glass rounded-lg p-6 text-center">
-    <div className="flex justify-center mb-3">
-      {icon}
-    </div>
+    <div className="flex justify-center mb-3">{icon}</div>
     <h3 className="text-lg font-semibold mb-2">{title}</h3>
     <p className="text-sm text-muted-foreground">{description}</p>
   </div>

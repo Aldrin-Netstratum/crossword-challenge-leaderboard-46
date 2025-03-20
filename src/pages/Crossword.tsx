@@ -3,22 +3,26 @@ import React, { useEffect } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { useAppStore, formatTime } from '@/lib/data';
 import { Button } from '@/components/ui/button';
-import CrosswordGrid from '@/components/CrosswordGrid';
-import CrosswordClue from '@/components/CrosswordClue';
+import QuizOptions from '@/components/CrosswordGrid';
+import QuizQuestion from '@/components/CrosswordClue';
 import Timer from '@/components/Timer';
 import UserInfo from '@/components/UserInfo';
-import { ArrowLeft, CornerDownLeft, Home, RotateCcw, Trophy } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, Home, RotateCcw, Trophy } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const Crossword: React.FC = () => {
+const Quiz: React.FC = () => {
   const {
     currentUser,
     gameState,
     startGame,
     resetGame,
     currentTime,
-    toggleDirection,
-    direction
+    currentQuestionIndex,
+    totalQuestions,
+    nextQuestion,
+    prevQuestion,
+    checkAllAnswers,
+    userAnswers
   } = useAppStore();
   const navigate = useNavigate();
   
@@ -34,8 +38,16 @@ const Crossword: React.FC = () => {
     }
   }, [gameState, startGame]);
   
-  const handleToggleDirection = () => {
-    toggleDirection();
+  const handlePrevQuestion = () => {
+    prevQuestion();
+  };
+  
+  const handleNextQuestion = () => {
+    nextQuestion();
+  };
+  
+  const handleSubmitQuiz = () => {
+    checkAllAnswers();
   };
   
   const handleReset = () => {
@@ -45,6 +57,14 @@ const Crossword: React.FC = () => {
   
   const handleViewLeaderboard = () => {
     navigate('/leaderboard');
+  };
+  
+  const isCurrentQuestionAnswered = () => {
+    return !!userAnswers[currentQuestionIndex];
+  };
+  
+  const areAllQuestionsAnswered = () => {
+    return userAnswers.filter(answer => !!answer).length === totalQuestions;
   };
   
   return (
@@ -80,11 +100,11 @@ const Crossword: React.FC = () => {
                   <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-green-100 dark:bg-green-800/20 mb-4">
                     <Trophy className="h-10 w-10 text-green-600 dark:text-green-400" />
                   </div>
-                  <h2 className="text-2xl font-bold text-green-800 dark:text-green-400">Awesome Job!</h2>
+                  <h2 className="text-2xl font-bold text-green-800 dark:text-green-400">Quiz Completed!</h2>
                 </div>
                 
                 <div className="mb-6">
-                  <p className="text-green-700 dark:text-green-300 mb-2">You completed the puzzle in:</p>
+                  <p className="text-green-700 dark:text-green-300 mb-2">You completed the quiz in:</p>
                   <div className="text-3xl font-bold text-green-800 dark:text-green-400">
                     {formatTime(currentTime)}
                   </div>
@@ -93,7 +113,7 @@ const Crossword: React.FC = () => {
                 <div className="flex flex-col gap-3">
                   <Button onClick={handleReset} variant="outline" className="border-green-300 dark:border-green-700 font-medium">
                     <RotateCcw className="mr-2 h-4 w-4" />
-                    Play Again
+                    Try Again
                   </Button>
                   <Button onClick={handleViewLeaderboard} variant="default" className="bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 font-medium">
                     <Trophy className="mr-2 h-4 w-4" />
@@ -110,41 +130,47 @@ const Crossword: React.FC = () => {
                 className="space-y-5"
               >
                 <div className="flex flex-col space-y-5">
-                  <CrosswordClue />
+                  <QuizQuestion />
                   
-                  <div className="flex items-center justify-center gap-3 mb-2">
-                    <Button 
-                      variant="secondary" 
-                      size="sm" 
-                      onClick={handleToggleDirection}
-                      className="text-sm flex items-center gap-2 font-medium"
-                    >
-                      {direction === 'across' ? (
-                        <>
-                          <span className="text-base">→</span>
-                          <span>Across</span>
-                        </>
-                      ) : (
-                        <>
-                          <span className="text-base">↓</span>
-                          <span>Down</span>
-                        </>
-                      )}
-                    </Button>
-                    
+                  <QuizOptions />
+                  
+                  <div className="flex items-center justify-between gap-3 mt-6">
                     <Button 
                       variant="outline" 
                       size="sm" 
-                      onClick={handleReset}
+                      onClick={handlePrevQuestion}
+                      disabled={currentQuestionIndex === 0}
                       className="text-sm flex items-center gap-2 font-medium"
                     >
-                      <RotateCcw size={14} />
-                      <span>Reset</span>
+                      <ArrowLeft size={14} />
+                      <span>Previous</span>
                     </Button>
+                    
+                    {currentQuestionIndex < totalQuestions - 1 ? (
+                      <Button 
+                        variant="default" 
+                        size="sm" 
+                        onClick={handleNextQuestion}
+                        disabled={!isCurrentQuestionAnswered()}
+                        className="text-sm flex items-center gap-2 font-medium"
+                      >
+                        <span>Next</span>
+                        <ArrowRight size={14} />
+                      </Button>
+                    ) : (
+                      <Button 
+                        variant="default" 
+                        size="sm" 
+                        onClick={handleSubmitQuiz}
+                        disabled={!areAllQuestionsAnswered()}
+                        className="text-sm flex items-center gap-2 font-medium bg-green-600 hover:bg-green-700"
+                      >
+                        <span>Finish Quiz</span>
+                        <Check size={14} />
+                      </Button>
+                    )}
                   </div>
                 </div>
-                
-                <CrosswordGrid />
                 
                 <motion.div 
                   className="text-center mt-4"
@@ -169,4 +195,4 @@ const Crossword: React.FC = () => {
   );
 };
 
-export default Crossword;
+export default Quiz;

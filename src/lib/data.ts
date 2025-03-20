@@ -2,35 +2,60 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-// PowerBI related crossword data
-const crosswordData = {
-  grid: [
-    ['D', 'A', 'X', '', 'P', 'B', 'I'],
-    ['A', '', 'S', 'L', 'I', 'C', 'E'],
-    ['T', 'A', 'B', 'L', 'E', '', 'M'],
-    ['A', '', 'I', '', '', 'D', 'E'],
-    ['', 'M', 'Z', '', 'K', 'A', 'A'],
-    ['M', 'E', 'A', 'S', 'U', 'R', 'E'],
-    ['D', 'A', 'X', '', 'P', 'I', '']
-  ],
-  clues: {
-    across: [
-      { number: 1, clue: "PowerBI data expression language", answer: "DAX", row: 0, col: 0 },
-      { number: 5, clue: "PowerBI's main product abbreviation", answer: "PBI", row: 0, col: 4 },
-      { number: 6, clue: "A filter applied to data", answer: "SLICE", row: 1, col: 2 },
-      { number: 7, clue: "Data organized in rows and columns", answer: "TABLE", row: 2, col: 0 },
-      { number: 10, clue: "An M function for importing data", answer: "MZ", row: 4, col: 1 },
-      { number: 11, clue: "A calculation used in visualizations", answer: "MEASURE", row: 5, col: 0 }
-    ],
-    down: [
-      { number: 1, clue: "Where data is stored", answer: "DATA", row: 0, col: 0 },
-      { number: 2, clue: "Programming language for PowerBI", answer: "M", row: 0, col: 1 },
-      { number: 3, clue: "Visual element that shows data values", answer: "AXIS", row: 0, col: 2 },
-      { number: 4, clue: "Interactive element to filter data", answer: "SLICER", row: 1, col: 3 },
-      { number: 8, clue: "Business Intelligence abbreviation", answer: "BI", row: 2, col: 2 },
-      { number: 9, clue: "Key ____ Indicator, common metric", answer: "PERFORMANCE", row: 0, col: 4 }
-    ]
-  }
+// Power BI quiz data
+const quizData = {
+  questions: [
+    {
+      question: "What does DAX stand for in Power BI?",
+      options: ["Data Analysis Expressions", "Dynamic Array XML", "Data Access Extension", "Development Analysis XML"],
+      correctAnswer: "Data Analysis Expressions"
+    },
+    {
+      question: "Which of these is NOT a type of visual in Power BI?",
+      options: ["Line chart", "Pie chart", "Neural network", "Scatter plot"],
+      correctAnswer: "Neural network"
+    },
+    {
+      question: "What language is used for data transformation in Power Query?",
+      options: ["SQL", "M", "R", "Python"],
+      correctAnswer: "M"
+    },
+    {
+      question: "Which of these is a Power BI file extension?",
+      options: [".pbi", ".pbix", ".pwbi", ".pobi"],
+      correctAnswer: ".pbix"
+    },
+    {
+      question: "What is a measure in Power BI?",
+      options: [
+        "A column in a table", 
+        "A calculation that uses DAX expressions",
+        "A type of chart", 
+        "A unit of data size"
+      ],
+      correctAnswer: "A calculation that uses DAX expressions"
+    },
+    {
+      question: "What is Power BI Desktop primarily used for?",
+      options: [
+        "Viewing reports", 
+        "Creating reports and data models", 
+        "Sharing reports", 
+        "Managing user access"
+      ],
+      correctAnswer: "Creating reports and data models"
+    },
+    {
+      question: "Which of these is a benefit of using Power BI?",
+      options: [
+        "It requires extensive coding knowledge",
+        "It can only connect to Microsoft data sources",
+        "It provides interactive data visualizations",
+        "It's exclusively for financial reporting"
+      ],
+      correctAnswer: "It provides interactive data visualizations"
+    }
+  ]
 };
 
 export type User = {
@@ -54,19 +79,19 @@ interface AppState {
   startTime: number | null;
   endTime: number | null;
   currentTime: number;
-  activeCellRow: number | null;
-  activeCellCol: number | null;
-  userAnswers: string[][];
-  direction: 'across' | 'down';
+  currentQuestionIndex: number;
+  totalQuestions: number;
+  userAnswers: string[];
   
   login: (username: string) => void;
   logout: () => void;
   startGame: () => void;
   endGame: () => void;
   updateCurrentTime: (time: number) => void;
-  setActiveCell: (row: number, col: number) => void;
-  updateCell: (row: number, col: number, value: string) => void;
-  toggleDirection: () => void;
+  nextQuestion: () => void;
+  prevQuestion: () => void;
+  updateAnswer: (questionIndex: number, answer: string) => void;
+  checkAllAnswers: () => void;
   resetGame: () => void;
   addToLeaderboard: (entry: LeaderboardEntry) => void;
 }
@@ -80,14 +105,9 @@ export const useAppStore = create<AppState>()(
       startTime: null,
       endTime: null,
       currentTime: 0,
-      activeCellRow: null,
-      activeCellCol: null,
-      userAnswers: Array(crosswordData.grid.length)
-        .fill([])
-        .map((_, i) => 
-          Array(crosswordData.grid[i].length).fill('')
-        ),
-      direction: 'across',
+      currentQuestionIndex: 0,
+      totalQuestions: quizData.questions.length,
+      userAnswers: Array(quizData.questions.length).fill(''),
       
       login: (username) => {
         const existingUser = get().leaderboard.find(
@@ -110,11 +130,8 @@ export const useAppStore = create<AppState>()(
           startTime: null,
           endTime: null,
           currentTime: 0,
-          userAnswers: Array(crosswordData.grid.length)
-            .fill([])
-            .map((_, i) => 
-              Array(crosswordData.grid[i].length).fill('')
-            )
+          currentQuestionIndex: 0,
+          userAnswers: Array(quizData.questions.length).fill('')
         });
       },
       
@@ -122,8 +139,8 @@ export const useAppStore = create<AppState>()(
         set({ 
           gameState: 'in-progress', 
           startTime: Date.now(),
-          activeCellRow: 0,
-          activeCellCol: 0
+          currentQuestionIndex: 0,
+          userAnswers: Array(quizData.questions.length).fill('')
         });
       },
       
@@ -177,86 +194,45 @@ export const useAppStore = create<AppState>()(
         set({ currentTime: time });
       },
       
-      setActiveCell: (row, col) => {
-        // Only set if it's a valid cell (not empty in the grid)
-        if (row >= 0 && row < crosswordData.grid.length && 
-            col >= 0 && col < crosswordData.grid[row].length &&
-            crosswordData.grid[row][col] !== '') {
-          set({ activeCellRow: row, activeCellCol: col });
+      nextQuestion: () => {
+        const currentIndex = get().currentQuestionIndex;
+        const totalQuestions = get().totalQuestions;
+        
+        if (currentIndex < totalQuestions - 1) {
+          set({ currentQuestionIndex: currentIndex + 1 });
         }
       },
       
-      updateCell: (row, col, value) => {
-        const { userAnswers, direction, activeCellRow, activeCellCol } = get();
+      prevQuestion: () => {
+        const currentIndex = get().currentQuestionIndex;
+        
+        if (currentIndex > 0) {
+          set({ currentQuestionIndex: currentIndex - 1 });
+        }
+      },
+      
+      updateAnswer: (questionIndex, answer) => {
+        const { userAnswers } = get();
         const updatedAnswers = [...userAnswers];
-        updatedAnswers[row][col] = value.toUpperCase();
+        updatedAnswers[questionIndex] = answer;
         
         set({ userAnswers: updatedAnswers });
         
-        // Move to next cell if input provided
-        if (value && activeCellRow !== null && activeCellCol !== null) {
-          let nextRow = activeCellRow;
-          let nextCol = activeCellCol;
-          
-          if (direction === 'across') {
-            nextCol += 1;
-            // Find next valid cell
-            while (nextCol < crosswordData.grid[nextRow].length && 
-                  crosswordData.grid[nextRow][nextCol] === '') {
-              nextCol += 1;
-            }
-            
-            if (nextCol >= crosswordData.grid[nextRow].length) {
-              // Move to next row if at the end
-              nextCol = 0;
-              nextRow = (nextRow + 1) % crosswordData.grid.length;
-            }
-          } else {
-            nextRow += 1;
-            // Find next valid cell
-            while (nextRow < crosswordData.grid.length && 
-                  (nextCol >= crosswordData.grid[nextRow].length || 
-                   crosswordData.grid[nextRow][nextCol] === '')) {
-              nextRow += 1;
-            }
-            
-            if (nextRow >= crosswordData.grid.length) {
-              // Move to next column if at the bottom
-              nextRow = 0;
-              nextCol = (nextCol + 1) % crosswordData.grid[0].length;
-            }
-          }
-          
-          // Check if we found a valid cell
-          if (nextRow < crosswordData.grid.length && 
-              nextCol < crosswordData.grid[nextRow].length &&
-              crosswordData.grid[nextRow][nextCol] !== '') {
-            set({ activeCellRow: nextRow, activeCellCol: nextCol });
-          }
-        }
+        // Auto-advance to next question if not on the last one
+        const currentIndex = get().currentQuestionIndex;
+        const totalQuestions = get().totalQuestions;
         
-        // Check if crossword is completed
-        let completed = true;
-        for (let r = 0; r < crosswordData.grid.length; r++) {
-          for (let c = 0; c < crosswordData.grid[r].length; c++) {
-            if (crosswordData.grid[r][c] !== '' && 
-                updatedAnswers[r][c] !== crosswordData.grid[r][c]) {
-              completed = false;
-              break;
-            }
-          }
-          if (!completed) break;
-        }
-        
-        if (completed && get().gameState === 'in-progress') {
-          get().endGame();
+        if (currentIndex < totalQuestions - 1) {
+          // Small delay before moving to next question
+          setTimeout(() => {
+            get().nextQuestion();
+          }, 300);
         }
       },
       
-      toggleDirection: () => {
-        set(state => ({ 
-          direction: state.direction === 'across' ? 'down' : 'across' 
-        }));
+      checkAllAnswers: () => {
+        // End the game and calculate score
+        get().endGame();
       },
       
       resetGame: () => {
@@ -265,14 +241,8 @@ export const useAppStore = create<AppState>()(
           startTime: null,
           endTime: null,
           currentTime: 0,
-          activeCellRow: null,
-          activeCellCol: null,
-          userAnswers: Array(crosswordData.grid.length)
-            .fill([])
-            .map((_, i) => 
-              Array(crosswordData.grid[i].length).fill('')
-            ),
-          direction: 'across'
+          currentQuestionIndex: 0,
+          userAnswers: Array(quizData.questions.length).fill('')
         });
       },
       
@@ -285,99 +255,18 @@ export const useAppStore = create<AppState>()(
       }
     }),
     {
-      name: 'powerbi-crossword-storage'
+      name: 'powerbi-quiz-storage'
     }
   )
 );
 
-export const getCrosswordData = () => crosswordData;
+export const getQuizData = () => quizData;
 
-export const isEmptyCell = (row: number, col: number): boolean => {
-  if (row >= 0 && row < crosswordData.grid.length &&
-      col >= 0 && col < crosswordData.grid[row].length) {
-    return crosswordData.grid[row][col] === '';
+export const getCurrentQuestion = (index: number) => {
+  if (index >= 0 && index < quizData.questions.length) {
+    return quizData.questions[index];
   }
-  return true;
-};
-
-export const getClueNumberForCell = (row: number, col: number): number | null => {
-  const acrossClue = crosswordData.clues.across.find(
-    clue => clue.row === row && clue.col === col
-  );
-  
-  const downClue = crosswordData.clues.down.find(
-    clue => clue.row === row && clue.col === col
-  );
-  
-  return acrossClue?.number || downClue?.number || null;
-};
-
-export const getCurrentClue = (row: number | null, col: number | null, direction: 'across' | 'down'): { clue: string, number: number } | null => {
-  if (row === null || col === null) return null;
-  
-  const clues = direction === 'across' ? crosswordData.clues.across : crosswordData.clues.down;
-  
-  if (direction === 'across') {
-    // Find the across clue that contains this cell
-    let startCol = col;
-    while (startCol > 0 && crosswordData.grid[row][startCol - 1] !== '') {
-      startCol--;
-    }
-    
-    const clue = clues.find(c => c.row === row && c.col === startCol);
-    return clue ? { clue: clue.clue, number: clue.number } : null;
-  } else {
-    // Find the down clue that contains this cell
-    let startRow = row;
-    while (startRow > 0 && startRow - 1 < crosswordData.grid.length && 
-           col < crosswordData.grid[startRow - 1].length && 
-           crosswordData.grid[startRow - 1][col] !== '') {
-      startRow--;
-    }
-    
-    const clue = clues.find(c => c.row === startRow && c.col === col);
-    return clue ? { clue: clue.clue, number: clue.number } : null;
-  }
-};
-
-export const getCellsForCurrentClue = (row: number | null, col: number | null, direction: 'across' | 'down'): { row: number, col: number }[] => {
-  if (row === null || col === null) return [];
-  
-  const cells: { row: number, col: number }[] = [];
-  
-  if (direction === 'across') {
-    // Find start of word
-    let startCol = col;
-    while (startCol > 0 && crosswordData.grid[row][startCol - 1] !== '') {
-      startCol--;
-    }
-    
-    // Add all cells in the word
-    let c = startCol;
-    while (c < crosswordData.grid[row].length && crosswordData.grid[row][c] !== '') {
-      cells.push({ row, col: c });
-      c++;
-    }
-  } else {
-    // Find start of word
-    let startRow = row;
-    while (startRow > 0 && 
-           col < crosswordData.grid[startRow - 1].length && 
-           crosswordData.grid[startRow - 1][col] !== '') {
-      startRow--;
-    }
-    
-    // Add all cells in the word
-    let r = startRow;
-    while (r < crosswordData.grid.length && 
-           col < crosswordData.grid[r].length && 
-           crosswordData.grid[r][col] !== '') {
-      cells.push({ row: r, col });
-      r++;
-    }
-  }
-  
-  return cells;
+  return null;
 };
 
 export const formatTime = (timeInMs: number): string => {

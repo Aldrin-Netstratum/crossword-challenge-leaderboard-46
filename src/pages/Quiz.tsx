@@ -1,13 +1,13 @@
 
 import React, { useEffect } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
-import { useAppStore, formatTime } from '@/lib/data';
+import { getCurrentQuestion, getQuizData, useAppStore, formatTime } from '@/lib/data';
 import { Button } from '@/components/ui/button';
 import QuizOptions from '@/components/QuizOptions';
 import QuizQuestion from '@/components/QuizQuestion';
 import Timer from '@/components/Timer';
 import UserInfo from '@/components/UserInfo';
-import { ArrowLeft, ArrowRight, Check, Home, RotateCcw, Trophy } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, CheckCircle, Home, RotateCcw, Trophy } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const Quiz: React.FC = () => {
@@ -25,6 +25,15 @@ const Quiz: React.FC = () => {
     userAnswers
   } = useAppStore();
   const navigate = useNavigate();
+  
+  // Calculate score
+  const calculateScore = () => {
+    const quizData = getQuizData();
+    return userAnswers.reduce((total, answer, index) => {
+      const question = quizData.questions[index];
+      return total + (answer === question.correctAnswer ? 1 : 0);
+    }, 0);
+  };
   
   // Redirect if not logged in
   if (!currentUser) {
@@ -103,10 +112,20 @@ const Quiz: React.FC = () => {
                   <h2 className="text-2xl font-bold text-green-800 dark:text-green-400">Quiz Completed!</h2>
                 </div>
                 
-                <div className="mb-6">
-                  <p className="text-green-700 dark:text-green-300 mb-2">You completed the quiz in:</p>
-                  <div className="text-3xl font-bold text-green-800 dark:text-green-400">
-                    {formatTime(currentTime)}
+                <div className="mb-6 space-y-4">
+                  <div className="flex flex-col gap-2">
+                    <p className="text-green-700 dark:text-green-300">Your score:</p>
+                    <div className="flex items-center justify-center gap-2 text-3xl font-bold text-green-800 dark:text-green-400">
+                      <CheckCircle className="h-6 w-6" />
+                      <span>{calculateScore()}/{totalQuestions}</span>
+                    </div>
+                  </div>
+                  
+                  <div className="flex flex-col gap-2">
+                    <p className="text-green-700 dark:text-green-300">Time taken:</p>
+                    <div className="text-3xl font-bold text-green-800 dark:text-green-400">
+                      {formatTime(currentTime)}
+                    </div>
                   </div>
                 </div>
                 

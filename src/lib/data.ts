@@ -61,12 +61,14 @@ const quizData = {
 export type User = {
   username: string;
   bestTime: number | null;
+  bestScore: number | null;
   completedAt: string | null;
 };
 
 type LeaderboardEntry = {
   username: string;
   time: number;
+  score: number;
   completedAt: string;
 };
 
@@ -117,6 +119,7 @@ export const useAppStore = create<AppState>()(
         const user: User = {
           username,
           bestTime: existingUser?.time || null,
+          bestScore: existingUser?.score || null,
           completedAt: existingUser?.completedAt || null
         };
         
@@ -146,14 +149,21 @@ export const useAppStore = create<AppState>()(
       
       endGame: () => {
         const endTime = Date.now();
-        const { startTime, currentUser, currentTime } = get();
+        const { startTime, currentUser, currentTime, userAnswers } = get();
         
         if (startTime && currentUser) {
           const completedAt = new Date().toISOString();
           
+          // Calculate score (number of correct answers)
+          const score = userAnswers.reduce((total, answer, index) => {
+            const question = quizData.questions[index];
+            return total + (answer === question.correctAnswer ? 1 : 0);
+          }, 0);
+          
           const newEntry: LeaderboardEntry = {
             username: currentUser.username,
             time: currentTime,
+            score,
             completedAt
           };
           
@@ -164,9 +174,13 @@ export const useAppStore = create<AppState>()(
             entry => entry.username.toLowerCase() === currentUser.username.toLowerCase()
           );
           
-          // If user exists and new time is better, update it
+          // If user exists, update if score is better or time is better with same score
           if (existingEntryIndex !== -1) {
-            if (updatedLeaderboard[existingEntryIndex].time > currentTime) {
+            const existingEntry = updatedLeaderboard[existingEntryIndex];
+            
+            // Update if new score is better, or if score is the same but time is better
+            if (score > existingEntry.score || 
+                (score === existingEntry.score && currentTime < existingEntry.time)) {
               updatedLeaderboard[existingEntryIndex] = newEntry;
             }
           } else {
@@ -174,8 +188,13 @@ export const useAppStore = create<AppState>()(
             updatedLeaderboard.push(newEntry);
           }
           
-          // Sort by time
-          updatedLeaderboard.sort((a, b) => a.time - b.time);
+          // Sort by score (descending) and then by time (ascending)
+          updatedLeaderboard.sort((a, b) => {
+            if (b.score !== a.score) {
+              return b.score - a.score; // Higher score first
+            }
+            return a.time - b.time; // If same score, faster time first
+          });
           
           set({ 
             gameState: 'completed', 
@@ -183,7 +202,10 @@ export const useAppStore = create<AppState>()(
             leaderboard: updatedLeaderboard,
             currentUser: {
               ...currentUser,
-              bestTime: Math.min(currentTime, currentUser.bestTime || Infinity),
+              bestTime: score === currentUser.bestScore 
+                ? Math.min(currentTime, currentUser.bestTime || Infinity)
+                : currentTime,
+              bestScore: Math.max(score, currentUser.bestScore || 0),
               completedAt
             }
           });
@@ -249,7 +271,13 @@ export const useAppStore = create<AppState>()(
       addToLeaderboard: (entry) => {
         set(state => {
           const updatedLeaderboard = [...state.leaderboard, entry];
-          updatedLeaderboard.sort((a, b) => a.time - b.time);
+          // Sort by score (descending) and then by time (ascending)
+          updatedLeaderboard.sort((a, b) => {
+            if (b.score !== a.score) {
+              return b.score - a.score; // Higher score first
+            }
+            return a.time - b.time; // If same score, faster time first
+          });
           return { leaderboard: updatedLeaderboard };
         });
       }

@@ -4,11 +4,11 @@ import { useNavigate } from 'react-router-dom';
 import { useAppStore, formatTime } from '@/lib/data';
 import { Button } from '@/components/ui/button';
 import UserInfo from '@/components/UserInfo';
-import { ArrowLeft, Award, Clock, Medal, Trophy, User } from 'lucide-react';
+import { ArrowLeft, Award, CheckCircle, Clock, Medal, Trophy, User } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const Leaderboard: React.FC = () => {
-  const { leaderboard, currentUser } = useAppStore();
+  const { leaderboard, currentUser, totalQuestions } = useAppStore();
   const navigate = useNavigate();
   
   const formatDate = (dateString: string) => {
@@ -72,9 +72,9 @@ const Leaderboard: React.FC = () => {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => navigate('/crossword')}
+              onClick={() => navigate('/quiz')}
             >
-              Play Crossword
+              Play Quiz
             </Button>
           </div>
           
@@ -90,8 +90,8 @@ const Leaderboard: React.FC = () => {
             {leaderboard.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 <Trophy className="h-10 w-10 mx-auto mb-4 opacity-20" />
-                <p>No completed puzzles yet!</p>
-                <p className="text-sm mt-2">Be the first to solve the crossword</p>
+                <p>No completed quizzes yet!</p>
+                <p className="text-sm mt-2">Be the first to take the quiz</p>
               </div>
             ) : (
               <motion.div 
@@ -138,8 +138,12 @@ const Leaderboard: React.FC = () => {
                       
                       <div className="flex flex-col items-end">
                         <div className="flex items-center gap-1 text-sm">
-                          <Clock size={14} className="text-muted-foreground" />
-                          <span className="font-medium">{formatTime(entry.time)}</span>
+                          <CheckCircle size={14} className="text-green-500" />
+                          <span className="font-medium">{entry.score}/{totalQuestions}</span>
+                        </div>
+                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                          <Clock size={12} />
+                          <span>{formatTime(entry.time)}</span>
                         </div>
                         <div className="text-xs text-muted-foreground">
                           {formatDate(entry.completedAt)}

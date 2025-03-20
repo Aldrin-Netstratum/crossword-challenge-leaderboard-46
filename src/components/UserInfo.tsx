@@ -1,7 +1,7 @@
 
-import { User, useAppStore } from "@/lib/data";
+import { formatTime, useAppStore } from "@/lib/data";
 import { AnimatePresence, motion } from "framer-motion";
-import { LogOut, Trophy, User as UserIcon } from "lucide-react";
+import { CheckCircle, LogOut, Trophy, User as UserIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const UserInfo = () => {
@@ -25,11 +25,17 @@ const UserInfo = () => {
             <span className="font-medium">{currentUser.username}</span>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
+          {currentUser.bestScore !== null && (
+            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+              <CheckCircle size={14} className="text-green-500" />
+              <span>Best: {currentUser.bestScore}/{useAppStore.getState().totalQuestions}</span>
+            </div>
+          )}
           {currentUser.bestTime && (
             <div className="flex items-center gap-1 text-xs text-muted-foreground">
               <Trophy size={14} className="text-primary" />
-              <span>Best: {formatTime(currentUser.bestTime)}</span>
+              <span>{formatTime(currentUser.bestTime)}</span>
             </div>
           )}
           <Button 
@@ -44,13 +50,6 @@ const UserInfo = () => {
       </motion.div>
     </AnimatePresence>
   );
-};
-
-const formatTime = (timeInMs: number): string => {
-  const totalSeconds = Math.floor(timeInMs / 1000);
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-  return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
 };
 
 export default UserInfo;

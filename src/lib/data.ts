@@ -1,6 +1,7 @@
-
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { getLeaderboard, updateLeaderboard, LeaderboardEntry as SupabaseLeaderboardEntry } from './supabase';
+import { toast } from '@/components/ui/use-toast';
 
 // Power BI quiz data
 const quizData = {
@@ -65,12 +66,7 @@ export type User = {
   completedAt: string | null;
 };
 
-type LeaderboardEntry = {
-  username: string;
-  time: number;
-  score: number;
-  completedAt: string;
-};
+type LeaderboardEntry = SupabaseLeaderboardEntry;
 
 type GameState = 'not-started' | 'in-progress' | 'completed';
 
@@ -84,6 +80,7 @@ interface AppState {
   currentQuestionIndex: number;
   totalQuestions: number;
   userAnswers: string[];
+  isLeaderboardLoading: boolean;
   
   login: (username: string) => void;
   logout: () => void;
@@ -95,7 +92,7 @@ interface AppState {
   updateAnswer: (questionIndex: number, answer: string) => void;
   checkAllAnswers: () => void;
   resetGame: () => void;
-  addToLeaderboard: (entry: LeaderboardEntry) => void;
+  fetchLeaderboard: () => Promise<void>;
 }
 
 export const useAppStore = create<AppState>()(
@@ -110,6 +107,7 @@ export const useAppStore = create<AppState>()(
       currentQuestionIndex: 0,
       totalQuestions: quizData.questions.length,
       userAnswers: Array(quizData.questions.length).fill(''),
+      isLeaderboardLoading: false,
       
       login: (username) => {
         const existingUser = get().leaderboard.find(
@@ -124,6 +122,7 @@ export const useAppStore = create<AppState>()(
         };
         
         set({ currentUser: user });
+        get().fetchLeaderboard();
       },
       
       logout: () => {
@@ -147,7 +146,7 @@ export const useAppStore = create<AppState>()(
         });
       },
       
-      endGame: () => {
+      endGame: async () => {
         const endTime = Date.now();
         const { startTime, currentUser, currentTime, userAnswers } = get();
         
@@ -166,45 +165,35 @@ export const useAppStore = create<AppState>()(
             score,
             completedAt
           };
-          
-          let updatedLeaderboard = [...get().leaderboard];
-          
-          // Check if user already has an entry
-          const existingEntryIndex = updatedLeaderboard.findIndex(
-            entry => entry.username.toLowerCase() === currentUser.username.toLowerCase()
-          );
-          
-          // If user exists, update if score is better or time is better with same score
-          if (existingEntryIndex !== -1) {
-            const existingEntry = updatedLeaderboard[existingEntryIndex];
-            
-            // Update if new score is better, or if score is the same but time is better
-            if (score > existingEntry.score || 
-                (score === existingEntry.score && currentTime < existingEntry.time)) {
-              updatedLeaderboard[existingEntryIndex] = newEntry;
+
+          try {
+            const success = await updateLeaderboard(newEntry);
+            if (success) {
+              await get().fetchLeaderboard();
+            } else {
+              toast({
+                title: "Error updating leaderboard",
+                description: "Your score couldn't be saved to the global leaderboard",
+                variant: "destructive"
+              });
             }
-          } else {
-            // Add new entry
-            updatedLeaderboard.push(newEntry);
+          } catch (error) {
+            console.error("Error updating leaderboard:", error);
+            toast({
+              title: "Error updating leaderboard",
+              description: "Your score couldn't be saved to the global leaderboard",
+              variant: "destructive"
+            });
           }
-          
-          // Sort by score (descending) and then by time (ascending)
-          updatedLeaderboard.sort((a, b) => {
-            if (b.score !== a.score) {
-              return b.score - a.score; // Higher score first
-            }
-            return a.time - b.time; // If same score, faster time first
-          });
           
           set({ 
             gameState: 'completed', 
             endTime, 
-            leaderboard: updatedLeaderboard,
             currentUser: {
               ...currentUser,
-              bestTime: score === currentUser.bestScore 
+              bestTime: score === get().totalQuestions 
                 ? Math.min(currentTime, currentUser.bestTime || Infinity)
-                : currentTime,
+                : currentUser.bestTime,
               bestScore: Math.max(score, currentUser.bestScore || 0),
               completedAt
             }
@@ -240,12 +229,10 @@ export const useAppStore = create<AppState>()(
         
         set({ userAnswers: updatedAnswers });
         
-        // Auto-advance to next question if not on the last one
         const currentIndex = get().currentQuestionIndex;
         const totalQuestions = get().totalQuestions;
         
         if (currentIndex < totalQuestions - 1) {
-          // Small delay before moving to next question
           setTimeout(() => {
             get().nextQuestion();
           }, 300);
@@ -253,7 +240,6 @@ export const useAppStore = create<AppState>()(
       },
       
       checkAllAnswers: () => {
-        // End the game and calculate score
         get().endGame();
       },
       
@@ -268,18 +254,20 @@ export const useAppStore = create<AppState>()(
         });
       },
       
-      addToLeaderboard: (entry) => {
-        set(state => {
-          const updatedLeaderboard = [...state.leaderboard, entry];
-          // Sort by score (descending) and then by time (ascending)
-          updatedLeaderboard.sort((a, b) => {
-            if (b.score !== a.score) {
-              return b.score - a.score; // Higher score first
-            }
-            return a.time - b.time; // If same score, faster time first
+      fetchLeaderboard: async () => {
+        set({ isLeaderboardLoading: true });
+        try {
+          const leaderboardData = await getLeaderboard();
+          set({ leaderboard: leaderboardData, isLeaderboardLoading: false });
+        } catch (error) {
+          console.error("Error fetching leaderboard:", error);
+          toast({
+            title: "Error fetching leaderboard",
+            description: "Couldn't retrieve the global leaderboard data",
+            variant: "destructive"
           });
-          return { leaderboard: updatedLeaderboard };
-        });
+          set({ isLeaderboardLoading: false });
+        }
       }
     }),
     {

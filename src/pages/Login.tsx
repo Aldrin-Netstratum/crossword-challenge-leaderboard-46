@@ -13,7 +13,7 @@ const Login: React.FC = () => {
   
   // Redirect if already logged in
   if (currentUser) {
-    return <Navigate to="/crossword" />;
+    return <Navigate to="/quiz" />;
   }
   
   const handleSubmit = (e: React.FormEvent) => {
@@ -49,7 +49,7 @@ const Login: React.FC = () => {
               </div>
             </div>
           </motion.div>
-          <h1 className="text-3xl font-bold mb-1 tracking-tight">PowerBI Crossword</h1>
+          <h1 className="text-3xl font-bold mb-1 tracking-tight">PowerBI Quiz</h1>
           <p className="text-muted-foreground">Test your knowledge and race against the clock</p>
         </div>
         
@@ -79,7 +79,7 @@ const Login: React.FC = () => {
               </div>
               
               <Button type="submit" className="w-full bg-powerbi hover:bg-powerbi/90">
-                Start Puzzle
+                Start Quiz
               </Button>
             </div>
           </form>
@@ -90,7 +90,7 @@ const Login: React.FC = () => {
         </motion.div>
         
         <div className="mt-8 text-center text-sm text-muted-foreground">
-          <p>Challenge yourself with our PowerBI crossword puzzle and compete for the fastest time!</p>
+          <p>Challenge yourself with our PowerBI quiz and compete for the fastest time!</p>
         </div>
       </motion.div>
     </div>

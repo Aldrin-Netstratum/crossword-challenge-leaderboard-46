@@ -1,15 +1,20 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppStore, formatTime } from '@/lib/data';
 import { Button } from '@/components/ui/button';
 import UserInfo from '@/components/UserInfo';
-import { ArrowLeft, Award, CheckCircle, Clock, Medal, Trophy, User } from 'lucide-react';
+import { ArrowLeft, Award, CheckCircle, Clock, Medal, Trophy, User, RefreshCw } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const Leaderboard: React.FC = () => {
-  const { leaderboard, currentUser, totalQuestions } = useAppStore();
+  const { leaderboard, currentUser, totalQuestions, fetchLeaderboard, isLeaderboardLoading } = useAppStore();
   const navigate = useNavigate();
+  
+  // Fetch leaderboard data when component mounts
+  useEffect(() => {
+    fetchLeaderboard();
+  }, [fetchLeaderboard]);
   
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -69,13 +74,26 @@ const Leaderboard: React.FC = () => {
               <span>Home</span>
             </Button>
             
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => navigate('/quiz')}
-            >
-              Play Quiz
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => fetchLeaderboard()}
+                className="flex items-center gap-1"
+                disabled={isLeaderboardLoading}
+              >
+                <RefreshCw size={16} className={isLeaderboardLoading ? "animate-spin" : ""} />
+                <span>Refresh</span>
+              </Button>
+              
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate('/quiz')}
+              >
+                Play Quiz
+              </Button>
+            </div>
           </div>
           
           <UserInfo />
@@ -85,9 +103,17 @@ const Leaderboard: React.FC = () => {
             animate={{ opacity: 1, y: 0 }}
             className="glass rounded-lg p-6 mb-6"
           >
-            <h1 className="text-2xl font-bold mb-6 text-center">Leaderboard</h1>
+            <h1 className="text-2xl font-bold mb-2 text-center">Leaderboard</h1>
+            <p className="text-center text-muted-foreground text-sm mb-6">
+              Sidharth Sham Lal's PowerBI Challenge - Wikipeedika
+            </p>
             
-            {leaderboard.length === 0 ? (
+            {isLeaderboardLoading ? (
+              <div className="text-center py-8">
+                <RefreshCw className="h-8 w-8 mx-auto mb-4 animate-spin opacity-50" />
+                <p className="text-muted-foreground">Loading leaderboard data...</p>
+              </div>
+            ) : leaderboard.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 <Trophy className="h-10 w-10 mx-auto mb-4 opacity-20" />
                 <p>No completed quizzes yet!</p>

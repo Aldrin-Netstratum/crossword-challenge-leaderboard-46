@@ -34,11 +34,14 @@ const Index = () => {
           transition={{ duration: 0.5, delay: 0.2 }}
           className="max-w-md w-full mb-8"
         >
-          <div className="text-center mb-12">
+          <div className="text-center mb-8">
             <h1 className="text-4xl font-bold mb-4 tracking-tight">
-              PowerBI Quiz Challenge
+              Sidharth Sham Lal's PowerBI Challenge
             </h1>
             <p className="text-xl text-muted-foreground max-w-xs mx-auto">
+              Part of the "Wikipeedika" talk session
+            </p>
+            <p className="text-md text-muted-foreground mt-2 max-w-xs mx-auto">
               Test your knowledge and compete for the fastest time
             </p>
           </div>
@@ -99,7 +102,8 @@ const Index = () => {
       </main>
 
       <footer className="py-6 text-center text-sm text-muted-foreground">
-        <p>PowerBI Quiz Challenge &copy; {new Date().getFullYear()}</p>
+        <p>Sidharth Sham Lal's PowerBI Challenge &copy; {new Date().getFullYear()}</p>
+        <p className="text-xs mt-1">A Wikipeedika Production</p>
       </footer>
     </div>
   );

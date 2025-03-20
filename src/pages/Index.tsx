@@ -1,7 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { useAppStore } from "@/lib/data";
-import { Clock, Grid, LogIn, Trophy } from "lucide-react";
+import { Clock, Brain, LogIn, Trophy } from "lucide-react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 
@@ -23,7 +23,7 @@ const Index = () => {
               P
             </div>
           </div>
-          <span className="font-bold text-xl">PowerBI Crossword</span>
+          <span className="font-bold text-xl">PowerBI Quiz</span>
         </motion.div>
       </header>
 
@@ -36,7 +36,7 @@ const Index = () => {
         >
           <div className="text-center mb-12">
             <h1 className="text-4xl font-bold mb-4 tracking-tight">
-              PowerBI Crossword Challenge
+              PowerBI Quiz Challenge
             </h1>
             <p className="text-xl text-muted-foreground max-w-xs mx-auto">
               Test your knowledge and compete for the fastest time
@@ -50,10 +50,10 @@ const Index = () => {
             className="space-y-4"
           >
             {currentUser ? (
-              <Link to="/crossword" className="block">
+              <Link to="/quiz" className="block">
                 <Button size="lg" className="w-full bg-powerbi hover:bg-powerbi/90">
-                  <Grid className="mr-2 h-5 w-5" />
-                  Start Puzzle
+                  <Brain className="mr-2 h-5 w-5" />
+                  Start Quiz
                 </Button>
               </Link>
             ) : (
@@ -81,14 +81,14 @@ const Index = () => {
           className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-3xl w-full"
         >
           <FeatureCard
-            icon={<Grid className="h-6 w-6 text-powerbi" />}
+            icon={<Brain className="h-6 w-6 text-powerbi" />}
             title="PowerBI Theme"
             description="Test your knowledge of PowerBI concepts and features"
           />
           <FeatureCard
             icon={<Clock className="h-6 w-6 text-powerbi" />}
             title="Race Against Time"
-            description="Complete the crossword as fast as you can"
+            description="Complete the quiz as fast as you can"
           />
           <FeatureCard
             icon={<Trophy className="h-6 w-6 text-powerbi" />}
@@ -99,7 +99,7 @@ const Index = () => {
       </main>
 
       <footer className="py-6 text-center text-sm text-muted-foreground">
-        <p>PowerBI Crossword Challenge &copy; {new Date().getFullYear()}</p>
+        <p>PowerBI Quiz Challenge &copy; {new Date().getFullYear()}</p>
       </footer>
     </div>
   );
